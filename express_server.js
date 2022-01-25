@@ -75,3 +75,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   // console.log('this is test', test)
   res.redirect('/urls/');
 });
+
+app.post("/urls/:shortURL/edit", (req, res) => {
+  // let test =  urlDatabase[req.params.shortURL]
+    // console.log(test);
+  // res.redirect('/urls/:shortURL');
+  res.redirect('/urls/urls_show');
+
+});
+
