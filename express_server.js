@@ -76,10 +76,16 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   let random = generateRandomString();
-  let newUser = {id: random, email: req.body.email, password: req.body.password}
+  let email = req.body.email
+  let newUser = {id: random, email: email, password: req.body.password}
   users[random] = newUser;
+ 
   res.cookie('email', newUser.email)
   res.cookie('user_id', random);
+  if(!newUser.email || !newUser.password) {
+    return res.status(400);
+  }
+
   res.redirect('/urls');
 });
 
@@ -94,6 +100,9 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+
+  // const email = req.body.email;
+  // const password = req.body.password;
   res.cookie('username', req.body.username) 
   res.redirect("/urls")
 });
@@ -102,3 +111,9 @@ app.post("/logout", (req, res) => {
   res.clearCookie('username')
   res.redirect("/urls")
 });
+
+app.get("/login", (req, res) => {
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"], newUser: req.cookies['user_id'], email: req.cookies['email'] };
+
+  res.render("login", templateVars)
+})
