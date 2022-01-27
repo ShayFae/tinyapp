@@ -8,11 +8,17 @@
   </head>
   <body>
     <header><%- include('partials/_header') %></header> 
-    <h1>Login</h1>
+    <h2 style=" margin: 5px"><strong>Login</strong></h2>
     <form action="/login" method="POST">
-      <label>Email:</label>
-      <input type="email" name="email" placeholder="Email">
-      <label>Password:</label>
-      <input type="password" name="password" placeholder="password">
-      <button type="submit">Submit</button>
+      <div>
+        <label style=" margin: 5px"><strong>Email:</strong></label>
+        <br>
+        <input style="width: 500px; height: 40px; margin: 5px" type="email" name="email" placeholder="Email">
+        <br>
+        <label style=" margin: 5px"><strong>Password:</strong></label>
+        <br>
+        <input style="width: 500px; height: 40px; margin: 5px" type="password" name="password" placeholder="password">
+        <br>
+        <button style=" margin: 5px" type="submit" class="btn btn-primary"><strong>Login</strong></button>
+      </div>
     </form>

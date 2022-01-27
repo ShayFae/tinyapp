@@ -43,7 +43,6 @@ const findUserByEmail = function(user, email) {
   return null;
 };
 
-
 app.listen(PORT, () => {
   console.log(`Tiny App is listening on port ${PORT}!`);
 });
@@ -97,10 +96,11 @@ app.post("/register", (req, res) => {
   // let newUser = {id: random, email: email, password: req.body.password};
   //   users[random] = newUser;
   users[random] = { id: random, email: email, password: password };
+  //checks for blank submission
   if(!email || !password){
     res.status(400).send('Empty entry');
     }
-
+  //checks user if email is already in use with the function and sends a 400 status
   if (findUserByEmail(users, email)) {
       res.status(400).send('Email already in use');
     }
@@ -109,6 +109,7 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  //deletes the chosen param
   delete urlDatabase[req.params.shortURL]; 
   res.redirect("/urls");
 });
@@ -127,7 +128,16 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  //Email checker
   const user = findUserByEmail(users, email);
+  //if user password doesn't match registered password it will return the status 
+  if(user.password !== password) {
+    return res.status(403).send("Incorrect password");
+  };
+  //If no email is found matching it would return the status 
+  if(!user){
+    return res.status(403).send("Email not found");
+  };
   res.cookie("user_id", user.id);
   res.redirect("/urls");
 }); 
