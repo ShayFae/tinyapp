@@ -63,6 +63,9 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = {  userid: users[req.cookies['user_id']] };
   // console.log(users[req.cookies['user_id']])
+ if(!templateVars.userid) {
+   res.redirect('/login')
+ }
   res.render("urls_new", templateVars);
   
 });
@@ -70,6 +73,9 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], userid: users[req.cookies['user_id']]};
   // console.log(req.cookies['user_id'])
+  if(!templateVars.userid) {
+    res.status(401).send("Unauthorized access")
+  }
   res.render("urls_show", templateVars);
 });
 
@@ -109,6 +115,10 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const templateVars = {  userid: users[req.cookies['user_id']] };
+  if(!templateVars.userid) {
+    res.status(401).send("Unauthorized access")
+  }
   //deletes the chosen param
   delete urlDatabase[req.params.shortURL]; 
   res.redirect("/urls");
