@@ -15,9 +15,20 @@ const generateRandomString = function() {
   return Math.random().toString(36).substr(2, 6);
 };
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
 const users = { 
@@ -43,26 +54,39 @@ const findUserByEmail = function(user, email) {
   return null;
 };
 
+const findUrl = function(user, data) {
+  let find = {}
+for(const key in urlDatabase) {
+find[key] = urlDatabase[key].longURL;
+}
+return find;
+};
+
 app.listen(PORT, () => {
   console.log(`Tiny App is listening on port ${PORT}!`);
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, userid: users[req.cookies['user_id']] };
-  // console.log(req.cookies['user_id'])
+  // console.log(findUrl(urlDatabase))
+  const user = req.cookies['user_id']
+  const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.cookies['user_id']] };
+  console.log('1', urlDatabase)
   res.render('urls_index', templateVars);
 });
 
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
-  urlDatabase[randomString] = req.body.longURL;
-  // console.log(req.cookies['user_id'])
-  res.redirect(`/urls/${randomString}`);
+  // urlDatabase[randomString] = req.body.longURL;
+  urlDatabase[randomString] ={ longURL: req.body.longURL, userid: req.cookies['user_id'] } 
+  console.log('2', urlDatabase)
+
+  res.redirect(`/urls/`);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {  userid: users[req.cookies['user_id']] };
-  // console.log(users[req.cookies['user_id']])
+  const templateVars = {userid: users[req.cookies['user_id']] };
+  console.log('3', urlDatabase)
+
  if(!templateVars.userid) {
    res.redirect('/login')
  }
@@ -70,9 +94,12 @@ app.get("/urls/new", (req, res) => {
   
 });
 
+//need to show longurl in the edit!!!
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], userid: users[req.cookies['user_id']]};
-  // console.log(req.cookies['user_id'])
+  // const userid = req.cookies['user_id']
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  // console.log(findUrl('this', urlDatabase))
+  const templateVars = { shortURL: req.params.shortURL, longURL: longURL, userid: users[req.cookies['user_id']]};
   if(!templateVars.userid) {
     res.status(401).send("Unauthorized access")
   }
@@ -80,13 +107,13 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-   const longURL = urlDatabase[req.params.shortURL];
+   const longURL = urlDatabase[req.params.shortURL].longURL;
    res.redirect(longURL);
 });
+console.log(urlDatabase)
 
 app.get("/register", (req, res) => {
   const templateVars = { urls: urlDatabase, userid: users[req.cookies['user_id']] };
-  // console.log(req.cookies['user_id'])
   res.render('registration_page', templateVars);
 });
 
@@ -125,7 +152,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
+  // console.log('this is new long ',req.body.longURL)
+  // console.log('this is short', req.params.shortURL)
+  // console.log('This is long', urlDatabase[req.params.shortURL].longURL)
+  urlDatabase[req.params.shortURL].longURL = req.body.longURL
   res.redirect("/urls");
 });
 
