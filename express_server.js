@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+// const salt = bcrypt.genSaltSync(10);
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
@@ -35,7 +37,7 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password:  bcrypt.hashSync("purple-monkey-dinosaur")
   },
   "user2RandomID": {
     id: "user2RandomID",
@@ -98,48 +100,39 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls", (req, res) => {
-  // b6UTxQ: {
-  //   longURL: "https://www.tsn.ca",
-  //   userID: "aJ48lW"
-  // },
   // console.log(findUrl(urlDatabase))
-  const user = req.cookies['user_id'];
-  if (!user) {
+  const user = req.cookies['user_id']
+    if (!user) {
     return res.redirect('/login');
   }
-
-  // if (user) {
-  //   if (urlsForUser(urlDatabase, user)) {
-  //     // res.send("no")
-  //     // const urls = urlsForUser(urlDatabase, user);
-      const templateVars = { urls: urlsForUser(user, urlDatabase), userid: users[req.cookies['user_id']] };
-      res.render('urls_index', templateVars);
-  //   } else {
-
-  //     const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.cookies['user_id']] };
-  //     res.render('urls_index', templateVars);
-  //   }
-  //     // const templateVars = { urls: (urlsForUser(urlDatabase, user), userid: users[req.cookies['user_id']] };
-  //   // const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.cookies['user_id']] };
-  // }
+  const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.cookies['user_id']] };
+  res.render('urls_index', templateVars);
 });
 
+//Can't update new URLS
+// app.get("/urls", (req, res) => {
+//   const user = req.cookies['user_id'];
+//   if (!user) {
+//     return res.redirect('/login');
+//   }
+//       // const templateVars = { urls: urlsForUser(user, urlDatabase), userid: users[req.cookies['user_id']] };
+//       // res.render('urls_index', templateVars);
+//  const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.cookies['user_id']] };
+//  res.render('urls_index', templateVars);
+// });
 
 app.post("/urls", (req, res) => {
-  const user = req.cookies['user_id'];
-  // if(!urlsForUser(urlDatabase, user)) {
-  // // urlDatabase[randomString] = req.body.longURL;
-  // }
-  // const test = urlsForUser(urlDatabase, user);
-  // if (!test) {
-  //   return res.status(403).send("Unauthorized Access");
-  // }
+  // console.log(req.body); 
   const randomString = generateRandomString();
-  urlDatabase[randomString] = { longURL: req.body.longURL, userid: req.cookies['user_id'] };
-  res.redirect(`/urls/`);
+  urlDatabase[randomString] = { longURL: req.body.longURL, userid: users[req.cookies['user_id']] };
+  console.log('test', urlDatabase[randomString].longURL)
+  res.redirect('/urls');
 });
 
+
+
 app.get("/urls/new", (req, res) => {
+    // res.send('hello')
   const templateVars = {userid: users[req.cookies['user_id']] };
   if (!templateVars.userid) {
     res.redirect('/login');
@@ -148,9 +141,9 @@ app.get("/urls/new", (req, res) => {
   
 });
 
-//need to show longurl in the edit!!!
 app.get("/urls/:shortURL", (req, res) => {
-  // const userid = req.cookies['user_id']
+  // res.send('hello')
+  // const user = req.cookies['user_id']
   const longURL = urlDatabase[req.params.shortURL].longURL;
   // console.log(findUrl('this', urlDatabase))
   const templateVars = { shortURL: req.params.shortURL, longURL: longURL, userid: users[req.cookies['user_id']]};
@@ -159,6 +152,7 @@ app.get("/urls/:shortURL", (req, res) => {
   }
   res.render("urls_show", templateVars);
 });
+
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
@@ -170,20 +164,17 @@ app.get("/register", (req, res) => {
   res.render('registration_page', templateVars);
 });
 
-// app.get("/register", (req, res) => {
-//   const templateVars = { urls: urlDatabase, user: null };
-//   res.render("register", templateVars);
-// });
 
 app.post("/register", (req, res) => {
   const random = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashPassword = bcrypt.hashSync(password, 10)
   // let newUser = {id: random, email: email, password: req.body.password};
   //   users[random] = newUser;
   users[random] = { id: random, email: email, password: password };
   //checks for blank submission
-  if (!email || !password) {
+  if (!email ||  !password) {
     res.status(400).send('Empty entry');
   }
   //checks user if email is already in use with the function and sends a 400 status
@@ -221,6 +212,8 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashPassword = bcrypt.hashSync(password, 10)
+  // console.log(hashPassword)
   //Email checker
   const user = findUserByEmail(email);
   console.log(user)
