@@ -14,7 +14,7 @@
         <header><%- include('partials/_header') %></header>
         <% for(let url in urls) { %>
           <tr>
-            <td><%= url %></td>
+            <td><a href="<%= urls[url] %>"><%= url %></a></td>
             <td><%= urls[url] %></td> 
             <form method="GET" action="/urls/<%= url %>">
               <td><button type="submit" class="btn btn-outline-primary">Edit</button></td>
