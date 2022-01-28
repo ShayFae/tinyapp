@@ -17,13 +17,8 @@ app.use(cookieSession({
 
 const generateRandomString = function() {
   //Num to string then return from 2 the length of 6(no decimal!)
-  return Math.random().toString(36).substr(2, 6);
+  return Math.random().toString(36).substring(2, 6);
 };
-
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
 
 const urlDatabase = {
   b6UTxQ: {
@@ -32,7 +27,11 @@ const urlDatabase = {
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW"
+    userID: "aJ48lW",
+  },
+  x4PowG: {
+    longURL: "https://www.youtube.com",
+    userID: "5f42xC"
   }
 };
 
@@ -40,7 +39,7 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password:  bcrypt.hashSync("purple-monkey-dinosaur")
+    password:  bcrypt.hashSync("purple-monkey-dinosaur"),
   },
   "user2RandomID": {
     id: "user2RandomID",
@@ -50,7 +49,12 @@ const users = {
   "aJ48lW": {
     id: "aJ48lW",
     email: "user3@example.com",
-    password: "test"
+    password: "test",
+  },
+  "5f42xC": {
+    id: "5f42xC",
+    email: "user4@example.com",
+    password: "banana"
   }
 };
 
@@ -87,7 +91,6 @@ const findUrl = function(user, data) {
 //   return false;
 // };
 
-// const user = "aJ48lW"
 const urlsForUser = (user, uDatabase) => {
   let userLinks = {};
   for (const value in uDatabase) {
@@ -102,40 +105,35 @@ app.listen(PORT, () => {
   console.log(`Tiny App is listening on port ${PORT}!`);
 });
 
-app.get("/urls", (req, res) => {
-  // console.log(findUrl(urlDatabase))
-  const user = req.session['user_id']
-    if (!user) {
-    return res.redirect('/login');
-  }
-  const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.session['user_id']] };
-  res.render('urls_index', templateVars);
-});
-
-//Can't update new URLS
 // app.get("/urls", (req, res) => {
-//   const user = req.cookies['user_id'];
-//   if (!user) {
+//   // console.log(findUrl(urlDatabase))
+//   const user = req.session['user_id']
+//     if (!user) {
 //     return res.redirect('/login');
 //   }
-//       // const templateVars = { urls: urlsForUser(user, urlDatabase), userid: users[req.cookies['user_id']] };
-//       // res.render('urls_index', templateVars);
-//  const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.cookies['user_id']] };
-//  res.render('urls_index', templateVars);
+//   const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.session['user_id']] };
+//   res.render('urls_index', templateVars);
 // });
 
+//shows matching urls with userIDS  
+app.get("/urls", (req, res) => {
+  const user = req.session['user_id'];
+  if (!user) {
+    return res.redirect('/login');
+  }
+const templateVars = { urls: urlsForUser(user, urlDatabase), userid: users[req.session['user_id']] };
+res.render('urls_index', templateVars);
+});
+
 app.post("/urls", (req, res) => {
-  // console.log(req.body); 
   const randomString = generateRandomString();
   urlDatabase[randomString] = { longURL: req.body.longURL, userid: users[req.session['user_id']] };
+  //Its accepting the longURL inputed but not adding it to the URLS homepage
   console.log('test', urlDatabase[randomString].longURL)
   res.redirect('/urls');
 });
 
-
-
 app.get("/urls/new", (req, res) => {
-    // res.send('hello')
   const templateVars = {userid: users[req.session['user_id']] };
   if (!templateVars.userid) {
     res.redirect('/login');
@@ -145,7 +143,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  // res.send('hello')
   // const user = req.cookies['user_id']
   const longURL = urlDatabase[req.params.shortURL].longURL;
   // console.log(findUrl('this', urlDatabase))
