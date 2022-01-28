@@ -76,21 +76,6 @@ const findUrl = function(user, data) {
   return url;
 };
 
-// const urlsForUser = function(id, user) {
-//   let userLinks = {};
-//   for (const test in id) {
-//     id[test].userID;
-//     if (user === id[test].userID) {
-//       // console.log('yes')
-//       // console.log(id[test].longURL)
-//       userLinks[test] = id[test].longURL;
-//       return userLinks;
-//     }
-//   }
-//   // console.log(userLinks)
-//   return false;
-// };
-
 const urlsForUser = (user, uDatabase) => {
   let userLinks = {};
   for (const value in uDatabase) {
@@ -105,31 +90,25 @@ app.listen(PORT, () => {
   console.log(`Tiny App is listening on port ${PORT}!`);
 });
 
-// app.get("/urls", (req, res) => {
-//   // console.log(findUrl(urlDatabase))
-//   const user = req.session['user_id']
-//     if (!user) {
-//     return res.redirect('/login');
-//   }
-//   const templateVars = { urls: findUrl(user, urlDatabase), userid: users[req.session['user_id']] };
-//   res.render('urls_index', templateVars);
-// });
-
-//shows matching urls with userIDS  
+// shows matching urls with userIDS  
 app.get("/urls", (req, res) => {
   const user = req.session['user_id'];
   if (!user) {
     return res.redirect('/login');
   }
+  // console.log('this is FindUrl function', findUrl(user, urlDatabase))
+  // console.log('this is Urls user function', urlsForUser(user, urlDatabase))
 const templateVars = { urls: urlsForUser(user, urlDatabase), userid: users[req.session['user_id']] };
 res.render('urls_index', templateVars);
 });
 
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
-  urlDatabase[randomString] = { longURL: req.body.longURL, userid: users[req.session['user_id']] };
+  urlDatabase[randomString] = { longURL: req.body.longURL, userID: req.session['user_id'] };
   //Its accepting the longURL inputed but not adding it to the URLS homepage
-  console.log('test', urlDatabase[randomString].longURL)
+  // console.log('test', urlDatabase[randomString].longURL)
+  // console.log('This is userID', urlDatabase[randomString].userID)
+  // console.log('this is user', urlDatabase[randomString])
   res.redirect('/urls');
 });
 
@@ -217,7 +196,6 @@ app.post("/login", (req, res) => {
   // console.log(hashPassword)
   //Email checker
   const user = findUserByEmail(email);
-  console.log(user)
   //if user password doesn't match registered password it will return the status
   if (user.password !== password) {
     return res.status(403).send("Incorrect password");
