@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 // const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
-var cookieSession = require('cookie-session')
-// const salt = bcrypt.genSaltSync(10);
+const cookieSession = require('cookie-session')
+const { findUserByEmail } = require('./helpers');
+const { urlsForUser } = require('./helpers');
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
@@ -56,34 +57,6 @@ const users = {
     email: "user4@example.com",
     password: "banana"
   }
-};
-
-const findUserByEmail = function(email) {
-  for (const userid in users) {
-    if (users[userid].email === email) {
-      // console.log('this is name', userid)
-      return users[userid];
-    }
-  }
-  return null;
-};
-
-const findUrl = function(user, data) {
-  let url = {};
-  for (const key in urlDatabase) {
-    url[key] = urlDatabase[key].longURL;
-  }
-  return url;
-};
-
-const urlsForUser = (user, uDatabase) => {
-  let userLinks = {};
-  for (const value in uDatabase) {
-    if (uDatabase[value].userID === user) {
-      userLinks[value] = uDatabase[value].longURL;
-    }
-  }
-  return userLinks;
 };
 
 app.listen(PORT, () => {
@@ -149,6 +122,7 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const hashPassword = bcrypt.hashSync(password, 10)
+  const user = urlDatabase
   // let newUser = {id: random, email: email, password: req.body.password};
   //   users[random] = newUser;
   users[random] = { id: random, email: email, password: password };
@@ -157,7 +131,7 @@ app.post("/register", (req, res) => {
     res.status(400).send('Empty entry');
   }
   //checks user if email is already in use with the function and sends a 400 status
-  if (findUserByEmail(users, email)) {
+  if (findUserByEmail(email, users)) {
     res.status(400).send('Email already in use');
   }
   req.session['user_id'] = random;
@@ -195,7 +169,7 @@ app.post("/login", (req, res) => {
   const hashPassword = bcrypt.hashSync(password, 10)
   // console.log(hashPassword)
   //Email checker
-  const user = findUserByEmail(email);
+  const user = findUserByEmail(email, users);
   //if user password doesn't match registered password it will return the status
   if (user.password !== password) {
     return res.status(403).send("Incorrect password");
