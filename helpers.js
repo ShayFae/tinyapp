@@ -1,3 +1,4 @@
+//Looks for matching emails in the database
 const findUserByEmail = function(email, database) {
   for (const userid in database) {
     if (database[userid].email === email) {
@@ -7,6 +8,7 @@ const findUserByEmail = function(email, database) {
   return null;
 };
 
+//Grabs shortlink and URL for user
 const urlsForUser = (user, uDatabase) => {
   let userLinks = {};
   for (const value in uDatabase) {
@@ -17,4 +19,9 @@ const urlsForUser = (user, uDatabase) => {
   return userLinks;
 };
 
-module.exports = { urlsForUser, findUserByEmail };
+//Makes a random userID 
+const generateRandomString = function() {
+  return Math.random().toString(36).substring(2, 6);
+};
+
+module.exports = { urlsForUser, findUserByEmail, generateRandomString };

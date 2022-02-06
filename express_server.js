@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const { findUserByEmail } = require('./helpers');
 const { urlsForUser } = require('./helpers');
+const { generateRandomString } = require('./helpers'); 
 const PORT = 8080; 
 app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
@@ -14,53 +15,17 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }));
 
-const generateRandomString = function() {
-  return Math.random().toString(36).substring(2, 6);
-};
+//Holds user data
+const urlDatabase = {};
+const users = {};
 
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW"
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-  x4PowG: {
-    longURL: "https://www.youtube.com",
-    userID: "5f42xC"
-  }
-};
-
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-  "aJ48lW": {
-    id: "aJ48lW",
-    email: "user3@example.com",
-    password: "test",
-  },
-  "5f42xC": {
-    id: "5f42xC",
-    email: "user4@example.com",
-    password: "banana"
-  }
-};
-
-app.listen(PORT, () => {
-  console.log(`Tiny App is listening on port ${PORT}!`);
+//GET
+app.get("/", (req, res) => {
+  res.redirect('/urls')
 });
 
 app.get("/urls", (req, res) => {
+  //First checks if there's a user logged in, if not it redirect them to login
   const user = req.session['user_id'];
   if (!user) {
     return res.redirect('/login');
@@ -69,27 +34,25 @@ app.get("/urls", (req, res) => {
   res.render('urls_index', templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  const randomString = generateRandomString();
-  urlDatabase[randomString] = { longURL: req.body.longURL, userID: req.session['user_id'] };
-  res.redirect('/urls');
-});
-
 app.get("/urls/new", (req, res) => {
+  //Checks if there's a user if not it redirects them to login 
   const templateVars = {userid: users[req.session['user_id']] };
   if (!templateVars.userid) {
     res.redirect('/login');
   }
   res.render("urls_new", templateVars);
-  
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  //If the userID doesn't match the shortURL userID then that user cannot edit that shortURL
+  //If they are the matching userID then they can edit the URL on the edit page
   const longURL = urlDatabase[req.params.shortURL].longURL;
+  const user = req.session['user_id'];
+  const shortURLUser = urlDatabase[req.params.shortURL].userID;
   const templateVars = { shortURL: req.params.shortURL, longURL: longURL, userid: users[req.session['user_id']]};
-  if (!templateVars.userid) {
+  if (user !== shortURLUser) {
     res.status(401).send("Unauthorized access");
-  }
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -103,9 +66,45 @@ app.get("/register", (req, res) => {
   res.render('registration_page', templateVars);
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = { userid: users[req.session['user_id']] };
+  res.render("login_page", templateVars);
+});
+
+//POST
+app.post("/urls", (req, res) => {
+  const randomString = generateRandomString();
+  urlDatabase[randomString] = { longURL: req.body.longURL, userID: req.session['user_id'] };
+  res.redirect('/urls');
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  //Delete's URL but only if the userID matches the userID who made the URL
+  //If not then it sends a 401 status
+  const user = req.session['user_id'];
+  const shortURLUser = urlDatabase[req.params.shortURL].userID;
+    if (shortURLUser === user) {
+      delete urlDatabase[req.params.shortURL], req.params.shortURL;
+      res.redirect("/urls");
+    } else {
+      res.status(401).send("Unauthorized access");
+    }
+});
+
+app.post("/urls/:shortURL/edit", (req, res) => {
+  //Edit section where you change the longURL
+  urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+  res.redirect("/urls");
+});
+
 app.post("/register", (req, res) => {
-  const random = generateRandomString();
+  //Checks if the users email is in the database before registering the user into it 
+  //Also if the password/email section is empty or not
   const email = req.body.email;
+  if (findUserByEmail(email, users)) {
+    res.status(400).send('Email already in use');
+  }
+  const random = generateRandomString();
   const password = req.body.password;
   const hashPassword = bcrypt.hashSync(password, 10);
   const user = urlDatabase;
@@ -113,33 +112,12 @@ app.post("/register", (req, res) => {
   if (!email ||  !password) {
     res.status(400).send('Empty entry');
   }
-  if (findUserByEmail(email, users)) {
-    res.status(400).send('Email already in use');
-  }
   req.session['user_id'] = random;
   res.redirect("/urls");
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const templateVars = {  userid: users[req.session['user_id']] };
-  if (!templateVars.userid) {
-    res.status(401).send("Unauthorized access");
-  }
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
-});
-
-app.post("/urls/:shortURL/edit", (req, res) => {
-  urlDatabase[req.params.shortURL].longURL = req.body.longURL;
-  res.redirect("/urls");
-});
-
-app.get("/login", (req, res) => {
-  const templateVars = { userid: users[req.session['user_id']] };
-  res.render("login_page", templateVars);
-});
-
 app.post("/login", (req, res) => {
+  //Checks if the password is correct and if the email is in the database if not it redirects
   const email = req.body.email;
   const password = req.body.password;
   const hashPassword = bcrypt.hashSync(password, 10);
@@ -155,6 +133,11 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
+  //Removes cookies and returns to /urls path page
   req.session['user_id'] = null;
   res.redirect("/urls");
+});
+
+app.listen(PORT, () => {
+  console.log(`Tiny App is listening on port ${PORT}!`);
 });
