@@ -84,7 +84,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const user = req.session['user_id'];
   const shortURLUser = urlDatabase[req.params.shortURL].userID;
     if (shortURLUser === user) {
-      delete urlDatabase[req.params.shortURL], req.params.shortURL;
+      delete urlDatabase[req.params.shortURL];
       res.redirect("/urls");
     } else {
       res.status(401).send("Unauthorized access");
